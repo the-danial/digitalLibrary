@@ -195,12 +195,22 @@ def _bootstrap_db_if_needed() -> None:
     cur = conn.cursor()
 
     # جدول users با ستون username (چون کدت همینو استفاده می‌کنه)
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE
-    )
-    """)
+    # --- users ---
+cur.execute("""
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT,
+    idea TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+)
+""")
+
+# ✅ اگر ستون username وجود ندارد، اضافه کن (برای دیتابیس‌هایی که قبلاً ساخته شدند)
+cur.execute("PRAGMA table_info(users)")
+cols = {row[1] for row in cur.fetchall()}
+if "username" not in cols:
+    cur.execute("ALTER TABLE users ADD COLUMN username TEXT")
+
 
     # جدول games
     cur.execute("""
