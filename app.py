@@ -188,24 +188,103 @@ INITIAL_MORALE = 80
 
 _db_schema_initialized = False
 
-def _ensure_db_schema() -> None:
-    """اطمینان از سازگاری اسکیما برای دیتابیس‌های قدیمی.
 
-    - اگر db_setup.py قبلاً اجرا شده باشد، این تابع فقط migrationهای سبک را اعمال می‌کند.
-    - اگر migrate_db موجود نباشد، چیزی انجام نمی‌دهد.
-    """
-    # فقط یک بار در هر پروسس
+def _bootstrap_db_if_needed() -> None:
+    """ساخت جداول پایه برای محیط‌های تازه (مثل Render Free)"""
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+
+    # جدول users با ستون username (چون کدت همینو استفاده می‌کنه)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE
+    )
+    """)
+
+    # جدول games
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS games (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        budget INTEGER DEFAULT 1000,
+        reputation INTEGER DEFAULT 50,
+        morale INTEGER DEFAULT 80,
+        turn INTEGER DEFAULT 1,
+        score INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    # جدول scenarios
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS scenarios (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        game_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT NOT NULL,
+        scenario_type TEXT DEFAULT 'crisis',
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    # جدول choices
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS choices (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        scenario_id INTEGER NOT NULL,
+        text TEXT NOT NULL,
+        cost_impact INTEGER DEFAULT 0,
+        reputation_impact INTEGER DEFAULT 0,
+        morale_impact INTEGER DEFAULT 0,
+        risk_level TEXT DEFAULT 'medium'
+    )
+    """)
+
+    # ✅ جدول game_logs (طبق لاگ Render شما)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS game_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        game_id INTEGER NOT NULL,
+        turn INTEGER NOT NULL,
+        scenario_id INTEGER,
+        scenario_title TEXT,
+        choice_id INTEGER,
+        choice_text TEXT,
+        cost_impact INTEGER DEFAULT 0,
+        reputation_impact INTEGER DEFAULT 0,
+        morale_impact INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    conn.commit()
+    conn.close()
+
+
+def _ensure_db_schema() -> None:
     global _db_schema_initialized
     if _db_schema_initialized:
         return
+
+    # ✅ اول جداول پایه ساخته شوند (برای دیتابیس تازه)
+    try:
+        _bootstrap_db_if_needed()
+    except Exception as e:
+        print(f"⚠️ خطا در ساخت جداول پایه: {e}")
+
+    # بعدش اگر migrate وجود داشت اجرا شود
     if migrate_database is None:
+        _db_schema_initialized = True
         return
+
     try:
         migrate_database(DB_PATH)
         _db_schema_initialized = True
     except Exception as e:
-        # اجازه بده برنامه بالا بیاید؛ fallbackها در تولید سناریو کمک می‌کنند
         print(f"⚠️ خطا در migrate_database: {e}")
+        _db_schema_initialized = True
+
 
 
 def get_db_connection():
