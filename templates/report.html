@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}گزارش بازی | Startup Sandbox{% endblock %}
+
+{% block content %}
+<section class="report">
+  <div class="card">
+    <div class="card__header">
+      <div class="pill">Report</div>
+      <h1 class="card__title">گزارش شبیه‌سازی</h1>
+      <p class="muted">
+        خلاصه تصمیم‌ها و روند وضعیت شرکت
+      </p>
+    </div>
+
+    <div class="card__body">
+      <div class="report__top">
+        <div class="hud__chip">
+          <div class="hud__label">مود</div>
+          <div class="hud__value">{{ mode|default("classic") }}</div>
+        </div>
+        <div class="hud__chip">
+          <div class="hud__label">نوبت‌ها</div>
+          <div class="hud__value hud__value--mono">{{ turns|default(0) }}</div>
+        </div>
+        <div class="hud__chip">
+          <div class="hud__label">بودجه پایانی</div>
+          <div class="hud__value hud__value--mono">{{ final_budget }}</div>
+        </div>
+        <div class="hud__chip">
+          <div class="hud__label">شهرت پایانی</div>
+          <div class="hud__value hud__value--mono">{{ final_rep }}%</div>
+        </div>
+        <div class="hud__chip">
+          <div class="hud__label">روحیه پایانی</div>
+          <div class="hud__value hud__value--mono">{{ final_morale }}%</div>
+        </div>
+      </div>
+
+      <div class="report__chart">
+        <div class="chartTitle">روند 10 تصمیم اخیر</div>
+        <div class="spark">
+          <div class="spark__row">
+            <span class="spark__label">💰</span>
+            <div class="spark__bar">
+              {% for v in budget_series %}
+                <span class="spark__dot" style="left: {{ v.pct }}%"></span>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="spark__row">
+            <span class="spark__label">⭐</span>
+            <div class="spark__bar">
+              {% for v in rep_series %}
+                <span class="spark__dot" style="left: {{ v.pct }}%"></span>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="spark__row">
+            <span class="spark__label">🧠</span>
+            <div class="spark__bar">
+              {% for v in morale_series %}
+                <span class="spark__dot" style="left: {{ v.pct }}%"></span>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="report__timeline">
+        <div class="chartTitle">Timeline تصمیم‌ها</div>
+        <div class="timeline">
+          {% for item in timeline %}
+            <div class="titem">
+              <div class="titem__head">
+                <span class="titem__turn">نوبت {{ item.turn }}</span>
+                <span class="titem__title">{{ item.scenario_title }}</span>
+              </div>
+              <div class="titem__body">
+                <div class="titem__choice">{{ item.choice_text }}</div>
+                <div class="titem__effects">
+                  <span class="delta" data-kind="budget">{{ item.db }}</span>
+                  <span class="delta" data-kind="rep">{{ item.dr }}</span>
+                  <span class="delta" data-kind="morale">{{ item.dm }}</span>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="report__actions">
+        <a class="btn btn--primary btn--lg" href="{{ url_for('game') }}">ادامه بازی</a>
+        <a class="btn btn--ghost" href="{{ url_for('index') }}">شروع بازی جدید</a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

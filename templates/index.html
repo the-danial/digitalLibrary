@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}اتاق جنگ استارتاپ‌ها | Startup Sandbox{% endblock %}
+
+{% block content %}
+<section class="landing">
+  <div class="landing__hero card">
+    <div class="card__header">
+      <div class="pill">اتاق جنگ استارتاپ‌ها</div>
+      <h1 class="landing__title">شبیه‌ساز تصمیم‌گیری واقعی برای استارتاپ‌ها</h1>
+    </div>
+
+    <div class="card__body">
+      <p class="landing__lead">
+        ایده‌ات رو وارد کن، وارد سناریوهای واقعی شو و مثل یک مدیرعامل تصمیم بگیر.
+        بدون ریسک مالی، با گزارش و امتیازدهی.
+      </p>
+
+      {# IMPORTANT: no action => posts to the same route (/) and avoids route-name mismatch #}
+      <form class="form form--grid" method="post" action="{{ url_for('new_game') }}">
+        <div class="field">
+          <label class="label">نام مدیرعامل</label>
+          <input class="input" name="username" placeholder="مثلاً: دانیال حاتمی" required>
+        </div>
+
+        <div class="field">
+          <label class="label">نام استارتاپ</label>
+          <input class="input" name="startup_name" placeholder="مثلاً: دیجیکالا" required>
+        </div>
+
+        <div class="field field--full">
+          <label class="label">ایده / توضیح کوتاه</label>
+          <textarea class="input input--textarea" name="idea" placeholder="در یک جمله بگو چه چیزی می‌سازی…"
+            required></textarea>
+        </div>
+
+        <div class="field field--full">
+          <button class="btn btn--primary" type="submit">🚀 شروع شبیه‌سازی</button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <div class="landing__features">
+    <div class="feature card">
+      <div class="feature__icon">🤖</div>
+      <div class="feature__title">راوی هوشمند</div>
+      <div class="feature__text">تولید سناریوهای پویا بر اساس وضعیت فعلی شرکت</div>
+    </div>
+
+    <div class="feature card">
+      <div class="feature__icon">🎯</div>
+      <div class="feature__title">تصمیم‌گیری واقعی</div>
+      <div class="feature__text">هر انتخاب، اثر مستقیم روی بودجه، شهرت و روحیه تیم</div>
+    </div>
+
+    <div class="feature card">
+      <div class="feature__icon">🛡️</div>
+      <div class="feature__title">محیط امن</div>
+      <div class="feature__text">تجربه شکست و موفقیت بدون ریسک مالی و واقعی</div>
+    </div>
+  </div>
+</section>
+{% endblock %}

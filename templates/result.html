@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}گزارش عملیات | Startup Sandbox{% endblock %}
+
+{% block content %}
+<div class="container result">
+
+  <div class="result__icon">⚡</div>
+
+  <div class="card result__card">
+    <div class="card__header">
+      <div class="pill">نتیجه تصمیم</div>
+      <h2 class="card__title">گزارش عملیات</h2>
+    </div>
+
+    <div class="card__body">
+      <p class="story story--big story--result">{{ story }}</p>
+
+      <div class="result__stats">
+        <div class="hud__chip">
+          <div class="hud__label">روز</div>
+          <div class="hud__value hud__value--mono">{{ game['turn'] }}</div>
+        </div>
+        <div class="hud__chip">
+          <div class="hud__label">روحیه</div>
+          <div class="hud__value hud__value--mono">{{ game['morale'] }}%</div>
+        </div>
+        <div class="hud__chip">
+          <div class="hud__label">شهرت</div>
+          <div class="hud__value hud__value--mono">{{ game['reputation'] }}%</div>
+        </div>
+        <div class="hud__chip">
+          <div class="hud__label">بودجه</div>
+          <div class="hud__value hud__value--mono">{{ game['budget'] }}$</div>
+        </div>
+      </div>
+
+      <div class="result__actions">
+        <a class="btn btn--primary btn--lg" href="{{ url_for('next_turn') }}">
+          <span class="btn__icon">➡️</span>
+          <span>دریافت دستور بعدی</span>
+        </a>
+
+        <a class="btn btn--ghost" href="{{ url_for('report', game_id=game['id']) }}">
+          <span class="btn__icon">📊</span>
+          <span>دیدن گزارش</span>
+        </a>
+
+
+        <a class="btn btn--ghost" href="{{ url_for('game') }}">
+          <span class="btn__icon">🎮</span>
+          <span>بازگشت به صفحه بازی</span>
+        </a>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

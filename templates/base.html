@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="fa" dir="rtl" data-theme="default">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
+  <title>{% block title %}Startup Sandbox{% endblock %}</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script defer src="{{ url_for('static', filename='script.js') }}"></script>
+</head>
+
+<body>
+  <div class="bg">
+    <div class="bg__blob bg__blob--1"></div>
+    <div class="bg__blob bg__blob--2"></div>
+    <div class="bg__noise"></div>
+  </div>
+
+  <header class="topbar">
+    <div class="topbar__left">
+      <div class="brand">
+        <span class="brand__dot"></span>
+        <span class="brand__title">Startup Sandbox</span>
+        <span class="brand__subtitle">War Room</span>
+      </div>
+    </div>
+
+    <div class="topbar__right">
+      <button class="btn btn--ghost" type="button" id="themeBtn" aria-label="تغییر تم">
+        <span class="btn__icon">🌓</span>
+        <span class="btn__text">تم</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+  <div class="toast" id="toast" aria-live="polite" aria-atomic="true"></div>
+</body>
+</html>

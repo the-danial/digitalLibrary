@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}انتخاب مود | Startup Sandbox{% endblock %}
+
+{% block content %}
+<section class="mode">
+  <div class="card">
+    <div class="card__header">
+      <div class="pill">Game Mode</div>
+      <h1 class="card__title">مود بازی را انتخاب کن</h1>
+      <p class="muted">
+        هر مود روی شدت اثر تصمیم‌ها و نوع سناریوها تاثیر می‌گذارد.
+      </p>
+    </div>
+
+    <div class="card__body">
+      <form method="post" class="mode__grid">
+        <button class="modeCard" type="submit" name="mode" value="classic">
+          <div class="modeCard__title">Classic</div>
+          <div class="modeCard__desc">متعادل و مناسب شروع</div>
+          <div class="modeCard__meta">⚖️ Balanced</div>
+        </button>
+
+        <button class="modeCard" type="submit" name="mode" value="crisis">
+          <div class="modeCard__title">Crisis</div>
+          <div class="modeCard__desc">بحران پشت بحران، سخت‌تر</div>
+          <div class="modeCard__meta">🔥 High Risk</div>
+        </button>
+
+        <button class="modeCard" type="submit" name="mode" value="investor">
+          <div class="modeCard__title">Investor</div>
+          <div class="modeCard__desc">تمرکز روی شهرت و رشد</div>
+          <div class="modeCard__meta">📈 Reputation Focus</div>
+        </button>
+
+        <button class="modeCard" type="submit" name="mode" value="bootstrap">
+          <div class="modeCard__title">Bootstrapped</div>
+          <div class="modeCard__desc">بودجه حساس‌تر، هزینه سنگین‌تر</div>
+          <div class="modeCard__meta">💸 Cost Sensitive</div>
+        </button>
+      </form>
+
+      <div class="mode__actions">
+        <a class="btn btn--ghost" href="{{ url_for('index') }}">بازگشت</a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

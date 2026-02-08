@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.pytest_cache/
+
+# Virtualenv
+.venv/
+venv/
+env/
+
+# Env secrets
+.env
+
+# DB / local artifacts
+*.db
+
+# OS
+.DS_Store
+Thumbs.db

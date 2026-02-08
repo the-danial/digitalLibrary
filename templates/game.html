@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Startup Sandbox | بازی{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <!-- HUD -->
+  <div class="hud">
+    <div class="hud__row">
+      <div class="hud__chip hud__chip--accent">
+        <div class="hud__label">امتیاز</div>
+        <div class="hud__value hud__value--mono">{{ game['score'] if game['score'] is defined else 0 }}</div>
+      </div>
+      <div class="hud__chip">
+        <div class="hud__label">نوبت</div>
+        <div class="hud__value hud__value--mono">{{ game['turn'] }}</div>
+      </div>
+      <div class="hud__chip">
+        <div class="hud__label">مرحله</div>
+        <div class="hud__value hud__value--mono">IDEA</div>
+      </div>
+    </div>
+
+    <div class="hud__row hud__row--stats">
+      <div class="stat stat--morale">
+        <div class="stat__top"><span class="stat__icon">💗</span><span>روحیه</span></div>
+        <div class="stat__num">{{ game['morale'] }}%</div>
+        <div class="stat__bar"><span class="stat__fill" style="width: {{ game['morale'] }}%"></span></div>
+      </div>
+
+      <div class="stat stat--rep">
+        <div class="stat__top"><span class="stat__icon">⭐</span><span>شهرت</span></div>
+        <div class="stat__num">{{ game['reputation'] }}%</div>
+        <div class="stat__bar"><span class="stat__fill" style="width: {{ game['reputation'] }}%;"></span></div>
+      </div>
+
+      <div class="stat stat--money">
+        <div class="stat__top"><span class="stat__icon">💰</span><span>بودجه</span></div>
+        <div class="stat__num">{{ game['budget'] }}</div>
+        <div class="stat__bar">
+          {% set budget_pct = (game['budget'] / 10000 * 100) if game['budget'] is not none else 0 %}
+          <span class="stat__fill" style="width: {{ budget_pct }}%"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- Choices -->
+    <div class="card">
+      <div class="card__header">
+        <div class="pill">تصمیم</div>
+        <h2 class="card__title">چه کار می‌کنی؟</h2>
+      </div>
+
+      <div class="card__body">
+        <form method="post" action="{{ url_for('action') }}" class="choices">
+          {% for c in choices %}
+          {% set eb = c['cost_impact'] %}
+          {% set er = c['reputation_impact'] %}
+          {% set em = c['morale_impact'] %}
+
+          <button class="choice" type="submit" name="choice_id" value="{{ c['id'] }}" data-delta-budget="{{ eb }}"
+            data-delta-rep="{{ er }}" data-delta-morale="{{ em }}">
+            <div class="choice__text">{{ c['text'] }}</div>
+
+            <div class="choice__meta">
+              <span class="delta" data-kind="budget">{{ "+" if eb|int >= 0 else "" }}{{ eb }}</span>
+              <span class="delta" data-kind="rep">{{ "+" if er|int >= 0 else "" }}{{ er }}</span>
+              <span class="delta" data-kind="morale">{{ "+" if em|int >= 0 else "" }}{{ em }}</span>
+            </div>
+          </button>
+          {% endfor %}
+        
+        </form>
+        <div class="hint hint--always">
+          <span class="hint__dot"></span>
+          روی هر گزینه مکث کن تا تأثیرش رو واضح‌تر ببینی.
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Scenario -->
+    <div class="card">
+      <div class="card__header">
+        <div class="pill pill--warn">سناریو</div>
+        <h2 class="card__title">{{ scenario['title'] }}</h2>
+      </div>
+      <div class="card__body">
+        <!-- ✅ این همون چیزی بود که نمایش داده نمی‌شد -->
+        <p class="story story--big">
+          {{ scenario['description'] }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
