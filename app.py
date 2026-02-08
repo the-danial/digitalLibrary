@@ -814,10 +814,21 @@ def new_game():
             user_id = cursor.lastrowid
 
         # ایجاد بازی جدید
-        cursor.execute('''
-            INSERT INTO games (user_id, startup_name, budget, reputation, morale, turn) 
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (user_id, startup_name, INITIAL_BUDGET, INITIAL_REPUTATION, INITIAL_MORALE, 1))
+        # ستون‌های جدول games را چک کن
+        cursor.execute("PRAGMA table_info(games)")
+        game_cols = {row[1] for row in cursor.fetchall()}
+
+        if "startup_name" in game_cols:
+            cursor.execute('''
+                INSERT INTO games (user_id, startup_name, budget, reputation, morale, turn)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (user_id, startup_name, INITIAL_BUDGET, INITIAL_REPUTATION, INITIAL_MORALE, 1))
+        else:
+            cursor.execute('''
+                INSERT INTO games (user_id, budget, reputation, morale, turn)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (user_id, INITIAL_BUDGET, INITIAL_REPUTATION, INITIAL_MORALE, 1))
+
         game_id = cursor.lastrowid
 
         conn.commit()
