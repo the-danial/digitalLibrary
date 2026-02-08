@@ -38,8 +38,85 @@ except Exception:
     migrate_database = None
 
 
+DB_PATH = os.getenv("STARTUP_DB_PATH", "startup.db")
+
+def ensure_db():
+    # اگر مسیر DB داخل پوشه بود، پوشه‌اش رو بساز
+    db_dir = os.path.dirname(DB_PATH)
+    if db_dir:
+        os.makedirs(db_dir, exist_ok=True)
+
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+
+    # ✅ جدول‌ها را IF NOT EXISTS بساز (همون‌هایی که db_setup.py می‌ساخت)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        idea TEXT NOT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS games (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        budget INTEGER DEFAULT 1000,
+        reputation INTEGER DEFAULT 50,
+        morale INTEGER DEFAULT 80,
+        turn INTEGER DEFAULT 1,
+        score INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS scenarios (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        game_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT NOT NULL,
+        scenario_type TEXT DEFAULT 'crisis',
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS choices (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        scenario_id INTEGER NOT NULL,
+        text TEXT NOT NULL,
+        cost_impact INTEGER DEFAULT 0,
+        reputation_impact INTEGER DEFAULT 0,
+        morale_impact INTEGER DEFAULT 0
+    )
+    """)
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        game_id INTEGER NOT NULL,
+        turn INTEGER NOT NULL,
+        scenario_id INTEGER,
+        scenario_title TEXT,
+        choice_id INTEGER,
+        choice_text TEXT,
+        cost_impact INTEGER DEFAULT 0,
+        reputation_impact INTEGER DEFAULT 0,
+        morale_impact INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    conn.commit()
+    conn.close()
+
+
 
 app = Flask(__name__)
+ensure_db()
 
 # در محیط production باید از متغیر محیطی استفاده شود
 app.secret_key = os.getenv('FLASK_SECRET_KEY', 'dev_secret_key_change_me')
