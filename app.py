@@ -756,50 +756,89 @@ def index():
 
 @app.route('/new_game', methods=['POST'])
 def new_game():
-    """شروع بازی جدید"""
-    username = request.form.get('username', '').strip()
-    startup_name = request.form.get('startup_name', '').strip()
-    
-    if not username or not startup_name:
+    """شروع بازی جدید (سازگار با دیتابیس‌های مختلف روی Render)"""
+    username = (request.form.get('username') or '').strip()      # نام مدیرعامل
+    startup_name = (request.form.get('startup_name') or '').strip()
+    idea = (request.form.get('idea') or '').strip()
+
+    if not username or not startup_name or not idea:
         return redirect(url_for('index'))
-    
+
     conn = get_db_connection()
     cursor = conn.cursor()
-    
+
     try:
-        # ایجاد یا به‌روزرسانی کاربر
-        cursor.execute('SELECT id FROM users WHERE username = ?', (username,))
-        user = cursor.fetchone()
-        if user:
-            user_id = user['id']
+        # ستون‌های جدول users را تشخیص بده
+        cursor.execute("PRAGMA table_info(users)")
+        user_cols = {row[1] for row in cursor.fetchall()}
+        has_username = "username" in user_cols
+        has_name = "name" in user_cols
+        has_idea = "idea" in user_cols
+
+        # معیار پیدا کردن کاربر موجود
+        if has_username:
+            cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
+        elif has_name:
+            cursor.execute("SELECT id FROM users WHERE name = ?", (username,))
         else:
-            cursor.execute('INSERT INTO users (username) VALUES (?)', (username,))
+            cursor.execute("SELECT id FROM users WHERE id = -1")
+
+        user = cursor.fetchone()
+
+        if user:
+            user_id = user["id"]
+        else:
+            # INSERT سازگار: name (NOT NULL) را پر کن
+            fields = []
+            values = []
+            params = []
+
+            if has_name:
+                fields.append("name")
+                params.append(username)
+
+            if has_username:
+                fields.append("username")
+                params.append(username)
+
+            if has_idea:
+                fields.append("idea")
+                params.append(idea)
+
+            # اگر به هر دلیل هیچ ستونی تشخیص داده نشد
+            if not fields:
+                raise RuntimeError("users table has no usable columns (name/username/idea)")
+
+            sql = f"INSERT INTO users ({', '.join(fields)}) VALUES ({', '.join(['?']*len(fields))})"
+            cursor.execute(sql, tuple(params))
             user_id = cursor.lastrowid
-        
+
         # ایجاد بازی جدید
         cursor.execute('''
             INSERT INTO games (user_id, startup_name, budget, reputation, morale, turn) 
             VALUES (?, ?, ?, ?, ?, ?)
         ''', (user_id, startup_name, INITIAL_BUDGET, INITIAL_REPUTATION, INITIAL_MORALE, 1))
         game_id = cursor.lastrowid
-        
+
         conn.commit()
         session['game_id'] = game_id
-        
+
         # تولید اولین سناریو
         generate_dynamic_scenario(
-            game_id, startup_name, 1, 
+            game_id, startup_name, 1,
             INITIAL_BUDGET, INITIAL_REPUTATION, INITIAL_MORALE
         )
-        
-        return redirect(url_for('mode'))
-        
+
+        return redirect(url_for('game'))
+
     except Exception as e:
         print(f"❌ خطا در ایجاد بازی: {e}")
         conn.rollback()
         return redirect(url_for('index'))
     finally:
         conn.close()
+
+
 
 @app.route('/game')
 def game():
@@ -898,10 +937,10 @@ def action():
         rep_impact  = int(round(choice["reputation_impact"] * mult["rep"]))
         morale_impact = int(round(choice["morale_impact"] * mult["morale"]))
 
-
         new_budget = clamp_stat(game['budget'] + cost_impact, MIN_BUDGET, MAX_BUDGET)
         new_reputation = clamp_stat(game['reputation'] + rep_impact, MIN_REPUTATION, MAX_REPUTATION)
         new_morale = clamp_stat(game['morale'] + morale_impact, MIN_MORALE, MAX_MORALE)
+
 
         # محاسبه مقادیر جدید
         # new_budget = clamp_stat(game['budget'] + choice['cost_impact'], MIN_BUDGET, MAX_BUDGET)
