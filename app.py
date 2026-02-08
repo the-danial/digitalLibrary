@@ -190,29 +190,26 @@ _db_schema_initialized = False
 
 
 def _bootstrap_db_if_needed() -> None:
-    """ساخت جداول پایه برای محیط‌های تازه (مثل Render Free)"""
+    """ساخت/تکمیل جداول پایه برای محیط‌های تازه (مثل Render Free)"""
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
 
-    # جدول users با ستون username (چون کدت همینو استفاده می‌کنه)
     # --- users ---
-cur.execute("""
-CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT,
-    idea TEXT,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP
-)
-""")
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        idea TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+    # اگر ستون username نبود، اضافه کن
+    cur.execute("PRAGMA table_info(users)")
+    cols = {row[1] for row in cur.fetchall()}
+    if "username" not in cols:
+        cur.execute("ALTER TABLE users ADD COLUMN username TEXT")
 
-# ✅ اگر ستون username وجود ندارد، اضافه کن (برای دیتابیس‌هایی که قبلاً ساخته شدند)
-cur.execute("PRAGMA table_info(users)")
-cols = {row[1] for row in cur.fetchall()}
-if "username" not in cols:
-    cur.execute("ALTER TABLE users ADD COLUMN username TEXT")
-
-
-    # جدول games
+    # --- games ---
     cur.execute("""
     CREATE TABLE IF NOT EXISTS games (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -226,7 +223,7 @@ if "username" not in cols:
     )
     """)
 
-    # جدول scenarios
+    # --- scenarios ---
     cur.execute("""
     CREATE TABLE IF NOT EXISTS scenarios (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -238,7 +235,7 @@ if "username" not in cols:
     )
     """)
 
-    # جدول choices
+    # --- choices ---
     cur.execute("""
     CREATE TABLE IF NOT EXISTS choices (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -251,7 +248,7 @@ if "username" not in cols:
     )
     """)
 
-    # ✅ جدول game_logs (طبق لاگ Render شما)
+    # --- game_logs ---
     cur.execute("""
     CREATE TABLE IF NOT EXISTS game_logs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -270,6 +267,7 @@ if "username" not in cols:
 
     conn.commit()
     conn.close()
+
 
 
 def _ensure_db_schema() -> None:
