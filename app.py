@@ -9,6 +9,8 @@ import json
 import os
 import requests
 from google import genai
+import traceback
+
 
 
 """Startup Sandbox (Flask)
@@ -843,9 +845,10 @@ def new_game():
         return redirect(url_for('game'))
 
     except Exception as e:
-        print(f"❌ خطا در ایجاد بازی: {e}")
-        conn.rollback()
-        return redirect(url_for('index'))
+        print("❌ خطا در پردازش تصمیم:", e)
+        print(traceback.format_exc())
+        return redirect(url_for("game"))
+
     finally:
         conn.close()
 
