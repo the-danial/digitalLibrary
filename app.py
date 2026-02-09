@@ -288,7 +288,7 @@ def generate_dynamic_scenario(game_id, startup_name, turn_number, current_budget
         # دریافت تاریخچه سناریوهای قبلی
         previous_logs = conn.execute('''
             SELECT scenario_title, scenario_type 
-            FROM game_logs 
+            FROM logs 
             WHERE game_id = ? 
             ORDER BY turn_number DESC 
             LIMIT 5
@@ -790,7 +790,7 @@ def action():
         
         # ذخیره لاگ
         conn.execute('''
-            INSERT INTO game_logs 
+            INSERT INTO logs 
             (game_id, turn_number, scenario_id, scenario_title, scenario_type, user_choice, choice_id,
              budget_before, reputation_before, morale_before,
              budget_after, reputation_after, morale_after, ai_response)
