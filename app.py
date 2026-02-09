@@ -161,14 +161,39 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-key")
 # AI Config (Gemini)
 # =========================
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
-_model = None
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "").strip()
+
+client = None
+_model_candidates: list[str] = []
+_working_model: str | None = None
+_ai_disabled_reason: str | None = None
+
 if GEMINI_API_KEY:
     try:
         client = genai.Client(api_key=GEMINI_API_KEY)
-        _model = "gemini-1.5-flash"
-    except Exception:
-        _model = None
 
+        # Candidate models (اولویت با GEMINI_MODEL در env)
+        if GEMINI_MODEL:
+            _model_candidates.append(GEMINI_MODEL)
+
+        _model_candidates += [
+            # مدل‌های جدیدتر (ممکن است برای بعضی کلیدها/نسخه‌ها در دسترس نباشند)
+            "gemini-1.5-flash",
+            "gemini-1.5-flash-latest",
+            "gemini-1.5-pro",
+            "gemini-1.5-pro-latest",
+            # مدل‌های قدیمی‌تر/سازگارتر
+            "gemini-1.0-pro",
+            "gemini-pro",
+        ]
+
+        # حذف تکراری‌ها با حفظ ترتیب
+        _seen = set()
+        _model_candidates = [m for m in _model_candidates if not (m in _seen or _seen.add(m))]
+
+    except Exception as e:
+        client = None
+        _ai_disabled_reason = f"init_failed: {e}"
 
 # =========================
 # Game Constants
@@ -237,30 +262,60 @@ def clamp_stat(v: int, vmin: int, vmax: int) -> int:
 
 
 def call_ai_api(prompt: str, json_mode: bool = True, temperature: float = 0.7):
-    """Call Gemini (اگر کلید نبود None برمی‌گرداند)"""
-    if not _model:
-        return None
-    try:
-        if json_mode:
-            # درخواست متن JSON
-            resp = client.models.generate_content(
-                model=_model,
-                contents=prompt,
-                config={"temperature": temperature}
-            )
-            text = resp.text or ""
-            return text.strip()
-        else:
-            resp = client.models.generate_content(
-                model=_model,
-                contents=prompt,
-                config={"temperature": temperature}
-            )
-            return (resp.text or "").strip()
-    except Exception as e:
-        print(f"❌ خطا در اتصال به Gemini: {e}")
+    """Call Gemini.
+
+    - اگر کلید/کلاینت موجود نباشد => None
+    - اگر مدل انتخابی پیدا نشود (404) => مدل‌های جایگزین را امتحان می‌کند
+    - اگر خطای کلید/دسترسی باشد => برای جلوگیری از اسپم لاگ، AI غیرفعال می‌شود
+    """
+    global _working_model, _ai_disabled_reason
+
+    if client is None or _ai_disabled_reason is not None:
         return None
 
+    def _request(model_name: str) -> str:
+        resp = client.models.generate_content(
+            model=model_name,
+            contents=prompt,
+            config={"temperature": temperature},
+        )
+        return (resp.text or "").strip()
+
+    # اگر قبلاً یک مدل سالم پیدا کردیم، اول همون رو امتحان کن
+    candidates: list[str] = []
+    if _working_model:
+        candidates.append(_working_model)
+    else:
+        candidates.extend(_model_candidates)
+
+    last_err: Exception | None = None
+
+    for mname in candidates:
+        try:
+            text = _request(mname)
+            if text:
+                _working_model = mname
+                return text
+            # اگر خروجی خالی بود، مدل بعدی
+        except Exception as e:
+            last_err = e
+            msg = str(e)
+
+            # مدل پیدا نشد => مدل بعدی
+            if ("NOT_FOUND" in msg) or ("not found" in msg.lower()) or ("404" in msg):
+                continue
+
+            # خطای کلید/مجوز => دیگر تلاش نکن تا لاگ پر نشود
+            if ("PERMISSION_DENIED" in msg) or ("invalid" in msg.lower()) or ("api key" in msg.lower()) or ("401" in msg):
+                _ai_disabled_reason = msg
+                break
+
+            # سایر خطاها => همان یک بار fallback
+            break
+
+    if last_err:
+        print(f"❌ خطا در اتصال به Gemini: {last_err}")
+    return None
 
 def get_scenario_type_weights(turn_number, budget, reputation, morale):
     weights = {
@@ -409,12 +464,17 @@ def generate_dynamic_scenario(game_id, startup_name, turn_number, current_budget
 # =========================
 # Routes
 # =========================
-@app.route("/mode")
+@app.route("/mode", methods=["GET", "POST"])
 def mode():
-    return render_template("mode.html")
+    # اگر بازی هنوز ساخته نشده، برگرد به صفحه اصلی
+    if "game_id" not in session:
+        return redirect(url_for("index"))
 
+    if request.method == "POST":
+        session["mode"] = request.form.get("mode", "classic")
+        return redirect(url_for("game"))
 
-@app.route("/", methods=["GET"])
+    return render_template("mode.html")@app.route("/", methods=["GET"])
 def index():
     return render_template("index.html")
 
