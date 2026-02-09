@@ -791,7 +791,7 @@ def action():
         # ذخیره لاگ
         conn.execute('''
             INSERT INTO logs 
-            (game_id, turn_number, scenario_id, scenario_title, scenario_type, user_choice, choice_id,
+            (game_id, turn, scenario_id, scenario_title, scenario_type, user_choice, choice_id,
              budget_before, reputation_before, morale_before,
              budget_after, reputation_after, morale_after, ai_response)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
